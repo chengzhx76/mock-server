@@ -1,7 +1,9 @@
 package com.github.chengzhx76.mock;
 
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.StrUtil;
+import com.github.chengzhx76.mock.utils.HttpClient;
 import com.github.chengzhx76.mock.utils.IpAdrressUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @desc:
@@ -26,35 +31,70 @@ import java.io.InputStreamReader;
 @SpringBootApplication
 public class MockApplication {
 
-    private final Logger LOG = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public static void main(String[] args) {
         SpringApplication.run(MockApplication.class, args);
     }
 
+    private String domain = "https://time.geekbang.org";
+
     @GetMapping(value = "**")
     public String mockApi4GetUrl(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String ip = IpAdrressUtil.getIpAdrress(request);
-        String url = request.getServletPath();
-        String params = request.getQueryString();
-        LOG.info("GET->请求IP {}-路径 {}-参数 {}", ip, url, params);
 
-        return DateUtil.now();
+        String ip = IpAdrressUtil.getIpAdrress(request);
+        String path = request.getServletPath();
+        String params = request.getQueryString();
+
+        Map<String, String> mapHeaders = new HashMap<>();
+        Enumeration<String> headers = request.getHeaderNames();
+        while (headers.hasMoreElements()) {
+            String key = headers.nextElement();
+            mapHeaders.put(key, request.getHeader(key));
+        }
+
+        logger.info("GET->请求IP[{}]-路径[{}]-头[{}]-参数[{}]", ip, path, MapUtil.join(mapHeaders, "\n", "->"), params);
+        String result = "";
+        if (StrUtil.isNotBlank(domain)) {
+            String url = domain + path + (params == null ? "" : "?" + params);
+            try {
+                result = HttpClient.httpGet(url, mapHeaders);
+            } catch (Exception e) {
+                logger.error("GET->error", e);
+            }
+            logger.info("GET->[{}]-RES[{}]", url, result);
+        }
+        return result;
     }
 
     @PostMapping(value = "**")
     public String mockApi4PostUrl(HttpServletRequest request, HttpServletResponse response) throws IOException {
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
-        String result = IoUtil.read(reader);
+        // 取到 header cookie
 
         String ip = IpAdrressUtil.getIpAdrress(request);
-        String url = request.getServletPath();
+        String path = request.getServletPath();
         String params = request.getQueryString();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
+        String body = IoUtil.read(reader);
 
-        LOG.info("POST->请求IP {}-路径 {}-参数 {}-Body参数{}", ip, url, params, result);
+        Map<String, String> mapHeaders = new HashMap<>();
+        Enumeration<String> headers = request.getHeaderNames();
+        while (headers.hasMoreElements()) {
+            mapHeaders.put(headers.nextElement(), request.getHeader(headers.nextElement()));
+        }
+        logger.info("POST->请求IP[{}]-路径[{}]-头[{}]-参数[{}]-Body参数[{}]", ip, path, MapUtil.join(mapHeaders, "\n", "->"), params, body);
+        String result = "";
+        if (StrUtil.isNotBlank(domain)) {
+            String url = domain + path + (params == null ? "" : "?" + params);
+            try {
+                result = HttpClient.httpPost(url, mapHeaders, body);
+            } catch (Exception e) {
+                logger.error("POST->error", e);
+            }
+            logger.info("POST->[{}]-RES[{}]", url, result);
+        }
 
-        return DateUtil.now();
+        return result;
     }
 
 

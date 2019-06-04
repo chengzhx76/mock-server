@@ -1,9 +1,10 @@
 package com.github.chengzhx76.mock.utils;
 
-import org.apache.http.client.fluent.Request;
+import cn.hutool.core.map.MapUtil;
+import cn.hutool.http.HttpUtil;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @desc:
@@ -11,13 +12,30 @@ import java.nio.charset.Charset;
  * @date: 2018/6/14
  */
 public class HttpClient {
-    public static String httpGet(String url) throws IOException {
-        return Request
-                .Get(url)
-                .connectTimeout(10000)
-                .socketTimeout(10000)
+
+    public static String httpGet(String url, Map<String, String> headers) {
+        return HttpUtil.createGet(url)
+                .addHeaders(headers)
+                .cookie(headers.get("Cookie"))
+                .timeout(5000)
                 .execute()
-                .returnContent()
-                .asString(Charset.forName("utf-8"));
+                .body();
+    }
+
+    public static String httpPost(String url, Map<String, String> headers, String body) {
+        return HttpUtil.createPost(url)
+                .addHeaders(headers)
+                .cookie(headers.get("Cookie"))
+                .timeout(5000)
+                .body(body)
+                .execute()
+                .body();
+    }
+
+    public static void main(String[] args) {
+        Map<String, String> mapHeaders = new HashMap<>();
+        mapHeaders.put("1", "a");
+        mapHeaders.put("2", "b");
+        System.out.println(MapUtil.join(mapHeaders, "\n", "->"));
     }
 }
