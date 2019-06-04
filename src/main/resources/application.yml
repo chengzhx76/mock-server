@@ -1,0 +1,7 @@
+server:
+  port: 8003
+#  context-path: /mock
+
+spring:
+  resources:
+    static-locations: classpath:static/,file:/usr/local/nginx/html
