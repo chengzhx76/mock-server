@@ -53,7 +53,7 @@ public class MockApplication {
             mapHeaders.put(key, request.getHeader(key));
         }
 
-        logger.info("GET->请求IP[{}]-路径[{}]-头[{}]-参数[{}]", ip, path, MapUtil.join(mapHeaders, "\n", "->"), params);
+        logger.info("GET->请求\nIP[{}]\n路径[{}]\n头[{}]\n参数[{}]", ip, path, MapUtil.join(mapHeaders, "\n", "->"), params);
         String result = "";
         if (StrUtil.isNotBlank(domain)) {
             String url = domain + path + (params == null ? "" : "?" + params);
@@ -80,9 +80,11 @@ public class MockApplication {
         Map<String, String> mapHeaders = new HashMap<>();
         Enumeration<String> headers = request.getHeaderNames();
         while (headers.hasMoreElements()) {
-            mapHeaders.put(headers.nextElement(), request.getHeader(headers.nextElement()));
+            String key = headers.nextElement();
+            mapHeaders.put(key, request.getHeader(key));
         }
-        logger.info("POST->请求IP[{}]-路径[{}]-头[{}]-参数[{}]-Body参数[{}]", ip, path, MapUtil.join(mapHeaders, "\n", "->"), params, body);
+        logger.info("POST->请求\nIP[{}]\n路径[{}]\n头[{}]\n参数[{}]\nBody参数[{}]", ip, path,
+                MapUtil.join(mapHeaders, "\n", "->"), params, body);
         String result = "";
         if (StrUtil.isNotBlank(domain)) {
             String url = domain + path + (params == null ? "" : "?" + params);
