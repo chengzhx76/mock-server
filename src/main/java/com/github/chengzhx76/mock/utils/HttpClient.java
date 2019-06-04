@@ -1,6 +1,7 @@
 package com.github.chengzhx76.mock.utils;
 
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 
 import java.util.HashMap;
@@ -13,23 +14,21 @@ import java.util.Map;
  */
 public class HttpClient {
 
-    public static String httpGet(String url, Map<String, String> headers) {
+    public static HttpResponse httpGet(String url, Map<String, String> headers) {
         return HttpUtil.createGet(url)
                 .addHeaders(headers)
                 .cookie(headers.get("Cookie"))
                 .timeout(5000)
-                .execute()
-                .body();
+                .execute();
     }
 
-    public static String httpPost(String url, Map<String, String> headers, String body) {
+    public static HttpResponse httpPost(String url, Map<String, String> headers, String body) {
         return HttpUtil.createPost(url)
                 .addHeaders(headers)
                 .cookie(headers.get("Cookie"))
                 .timeout(5000)
                 .body(body)
-                .execute()
-                .body();
+                .execute();
     }
 
     public static void main(String[] args) {
@@ -38,4 +37,8 @@ public class HttpClient {
         mapHeaders.put("2", "b");
         System.out.println(MapUtil.join(mapHeaders, "\n", "->"));
     }
+
+
+
+
 }

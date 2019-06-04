@@ -3,6 +3,7 @@ package com.github.chengzhx76.mock;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpResponse;
 import com.github.chengzhx76.mock.utils.HttpClient;
 import com.github.chengzhx76.mock.utils.IpAdrressUtil;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -37,10 +39,10 @@ public class MockApplication {
         SpringApplication.run(MockApplication.class, args);
     }
 
-    private String domain = "https://time.geekbang.org";
+    private String domain = "";
 
     @GetMapping(value = "**")
-    public String mockApi4GetUrl(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void mockApi4GetUrl(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         String ip = IpAdrressUtil.getIpAdrress(request);
         String path = request.getServletPath();
@@ -54,9 +56,10 @@ public class MockApplication {
         }
 
         logger.info("GET->请求\nIP[{}]\n路径[{}]\n头[{}]\n参数[{}]", ip, path, MapUtil.join(mapHeaders, "\n", "->"), params);
-        String result = "";
+        HttpResponse result = null;
+        String url = "";
         if (StrUtil.isNotBlank(domain)) {
-            String url = domain + path + (params == null ? "" : "?" + params);
+            url = domain + path + (params == null ? "" : "?" + params);
             try {
                 result = HttpClient.httpGet(url, mapHeaders);
             } catch (Exception e) {
@@ -64,11 +67,20 @@ public class MockApplication {
             }
             logger.info("GET->[{}]-RES[{}]", url, result);
         }
-        return result;
+
+        if (result != null) {
+            for (Map.Entry<String, List<String>> entry : result.headers().entrySet()) {
+                for (String value : entry.getValue()) {
+                    response.addHeader(entry.getKey(), value);
+                }
+            }
+            response.addHeader("Cookie", result.getCookieStr());
+            response.getOutputStream().write(result.bodyBytes());
+        }
     }
 
     @PostMapping(value = "**")
-    public String mockApi4PostUrl(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void mockApi4PostUrl(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // 取到 header cookie
 
         String ip = IpAdrressUtil.getIpAdrress(request);
@@ -85,9 +97,10 @@ public class MockApplication {
         }
         logger.info("POST->请求\nIP[{}]\n路径[{}]\n头[{}]\n参数[{}]\nBody参数[{}]", ip, path,
                 MapUtil.join(mapHeaders, "\n", "->"), params, body);
-        String result = "";
+        HttpResponse result = null;
+        String url = "";
         if (StrUtil.isNotBlank(domain)) {
-            String url = domain + path + (params == null ? "" : "?" + params);
+            url = domain + path + (params == null ? "" : "?" + params);
             try {
                 result = HttpClient.httpPost(url, mapHeaders, body);
             } catch (Exception e) {
@@ -96,7 +109,15 @@ public class MockApplication {
             logger.info("POST->[{}]-RES[{}]", url, result);
         }
 
-        return result;
+        if (result != null) {
+            for (Map.Entry<String, List<String>> entry : result.headers().entrySet()) {
+                for (String value : entry.getValue()) {
+                    response.addHeader(entry.getKey(), value);
+                }
+            }
+            response.addHeader("Cookie", result.getCookieStr());
+            response.getOutputStream().write(result.bodyBytes());
+        }
     }
 
 
