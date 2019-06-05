@@ -39,7 +39,7 @@ public class MockApplication {
         SpringApplication.run(MockApplication.class, args);
     }
 
-    private String domain = "";
+    private String domain = "http://chengzhx76.picp.vip/";
 
     @GetMapping(value = "**")
     public void mockApi4GetUrl(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -55,7 +55,8 @@ public class MockApplication {
             mapHeaders.put(key, request.getHeader(key));
         }
 
-        logger.info("GET->请求\nIP[{}]\n路径[{}]\n头[{}]\n参数[{}]", ip, path, MapUtil.join(mapHeaders, "\n", "->"), params);
+        logger.info("GET->请求\nIP[{}]\n路径[{}]\n头[{}]\n参数[{}]", ip, path,
+                MapUtil.join(mapHeaders, "\n", "->"), params);
         HttpResponse result = null;
         String url = "";
         if (StrUtil.isNotBlank(domain)) {
@@ -67,16 +68,7 @@ public class MockApplication {
             }
             logger.info("GET->[{}]-RES[{}]", url, result);
         }
-
-        if (result != null) {
-            for (Map.Entry<String, List<String>> entry : result.headers().entrySet()) {
-                for (String value : entry.getValue()) {
-                    response.addHeader(entry.getKey(), value);
-                }
-            }
-            response.addHeader("Cookie", result.getCookieStr());
-            response.getOutputStream().write(result.bodyBytes());
-        }
+        response(result, response);
     }
 
     @PostMapping(value = "**")
@@ -108,7 +100,10 @@ public class MockApplication {
             }
             logger.info("POST->[{}]-RES[{}]", url, result);
         }
+        response(result, response);
+    }
 
+    private void response(HttpResponse result, HttpServletResponse response) throws IOException {
         if (result != null) {
             for (Map.Entry<String, List<String>> entry : result.headers().entrySet()) {
                 for (String value : entry.getValue()) {
@@ -119,7 +114,6 @@ public class MockApplication {
             response.getOutputStream().write(result.bodyBytes());
         }
     }
-
 
 
     @GetMapping(value = "test")
