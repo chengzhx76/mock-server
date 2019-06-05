@@ -39,10 +39,10 @@ public class MockApplication {
         SpringApplication.run(MockApplication.class, args);
     }
 
-    private String domain = "http://chengzhx76.picp.vip/";
+    private String domain = "https://time.geekbang.org";
 
     @GetMapping(value = "**")
-    public void mockApi4GetUrl(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public String mockApi4GetUrl(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         String ip = IpAdrressUtil.getIpAdrress(request);
         String path = request.getServletPath();
@@ -68,11 +68,11 @@ public class MockApplication {
             }
             logger.info("GET->[{}]-RES[{}]", url, result);
         }
-        response(result, response);
+        return responseRet(result, response);
     }
 
     @PostMapping(value = "**")
-    public void mockApi4PostUrl(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public String mockApi4PostUrl(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // 取到 header cookie
 
         String ip = IpAdrressUtil.getIpAdrress(request);
@@ -100,18 +100,34 @@ public class MockApplication {
             }
             logger.info("POST->[{}]-RES[{}]", url, result);
         }
-        response(result, response);
+        return responseRet(result, response);
     }
 
     private void response(HttpResponse result, HttpServletResponse response) throws IOException {
         if (result != null) {
-            for (Map.Entry<String, List<String>> entry : result.headers().entrySet()) {
-                for (String value : entry.getValue()) {
-                    response.addHeader(entry.getKey(), value);
-                }
-            }
+//            for (Map.Entry<String, List<String>> entry : result.headers().entrySet()) {
+//                for (String value : entry.getValue()) {
+//                    response.addHeader(entry.getKey(), value);
+//                }
+//            }
             response.addHeader("Cookie", result.getCookieStr());
             response.getOutputStream().write(result.bodyBytes());
+        }
+    }
+    private String responseRet(HttpResponse result, HttpServletResponse response) throws IOException {
+        if (result != null) {
+            for (Map.Entry<String, List<String>> entry : result.headers().entrySet()) {
+                for (String value : entry.getValue()) {
+                    if (StrUtil.isNotBlank(entry.getKey())
+                            && !"Content-Encoding".equals(entry.getKey())) {
+                        response.setHeader(entry.getKey(), value);
+                        System.out.println(entry.getKey() + " -> " + value);
+                    }
+                }
+            }
+            return result.body();
+        } else {
+            return "";
         }
     }
 
